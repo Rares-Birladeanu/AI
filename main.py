@@ -1,18 +1,5 @@
 import numpy as np
 
-"""
-    We have a 3x3 matrix with 8 cells numbered 1 to 8 and one empty cell. Knowing that the initial position of the 
-cells is random and that we can move a cell only in place of the empty cell and only if it is adjacent to it, find, 
-if there is one, a sequence of moves such that all cells are placed in ascending order in the matrix. After a cell is 
-moved it cannot be moved again until one of its neighbors has been moved. The position of the empty cell does not 
-matter for final state validation.
-"""
-
-"""" 
-    Choose a representation of a state of the problem. The representation must be explicit enough to contain all the 
-necessary information to continue finding a solution, but it must also be formal enough to be easy to process/store.
-"""
-
 
 class Cell:
     def __init__(self, value, isMovable):
@@ -20,15 +7,7 @@ class Cell:
         self.isMovable = isMovable
 
 
-"""
-    Identify the special states (initial and final) and implement the initialization function (takes as parameters the 
-problem instance, returns the initial state) and the boolean function that checks whether a state received as a 
-parameter is final.
-"""
-
-
 def init(listOfValues):
-    # create a matrix of new cells and place the values from the list in each cell and return the matrix
     matrix = np.zeros((3, 3), dtype=Cell)
     for i in range(3):
         for j in range(3):
@@ -37,19 +16,7 @@ def init(listOfValues):
     return matrix
 
 
-# make a function that prints the values of cells in the matrix
-def printMatrix(matrix):
-    for i in range(3):
-        for j in range(3):
-            print(matrix[i, j].value, end=" ")
-        print()
-
-
-# make a function that returns true or false if the value from the cells from the matrix are in the right order (from
-# 1 to 8 and 0 at any place)
-
 def checkFinalOrder(matrix):
-    # use the value from the cells to check if they are in the right order using a max
     max = -1
     for i in range(3):
         for j in range(3):
@@ -62,38 +29,34 @@ def checkFinalOrder(matrix):
     return True
 
 
-"""
-    Implement transitions as functions that take a state and transition parameters and return the state resulting from 
-applying the transition. Validation of transitions is done in one or more boolean functions with the same parameters.
-"""
+def printMatrix(matrix):
+    for i in range(3):
+        for j in range(3):
+            print(matrix[i, j].value, end=" ")
+        print()
 
 
 def areMovable(matrix, x1, x2, y1, y2):
-    # check if the cells have the flag isMovable set to True
     return matrix[x1, y1].isMovable and matrix[x2, y2].isMovable
 
 
 def oneIsZero(matrix, x1, x2, y1, y2):
-    # check if one of the cells is 0
     return matrix[x1, y1].value == 0 or matrix[x2, y2].value == 0
 
 
 def resetIsMovable(matrix):
-    # reset the isMovable value of all the cells in the matrix
     for i in range(3):
         for j in range(3):
             matrix[i, j].isMovable = True
 
 
 def swapValues(matrix, x1, y1, x2, y2):
-    # swap the values of the cells
     aux = matrix[x1, y1].value
     matrix[x1, y1].value = matrix[x2, y2].value
     matrix[x2, y2].value = aux
 
 
 def checkZeroAndSetIsMovable(matrix, x1, y1, x2, y2):
-    # check if one of the cells is 0 and set the isMovable value of the other cell to False
     if matrix[x1, y1].value == 0:
         matrix[x2, y2].isMovable = False
     else:
@@ -123,6 +86,8 @@ def swapCells(matrix, x1, y1, x2, y2):
     else:
         resetIsMovable(matrix)
         swapValues(matrix, x1, y1, x2, y2)
+        global counter
+        counter += 1
         checkZeroAndSetIsMovable(matrix, x1, y1, x2, y2)
         return True
 
@@ -137,10 +102,8 @@ def findZero(matrix):
 def transition(matrix, moveDirection):
     x, y = findZero(matrix)
 
-
     if moveDirection == "up":
         if x == 0:
-            print("Invalid move: ", moveDirection)
             return False
         else:
             if swapCells(matrix, x, y, x - 1, y):
@@ -149,7 +112,6 @@ def transition(matrix, moveDirection):
                 return False
     elif moveDirection == "down":
         if x == 2:
-            print("Invalid move: ", moveDirection)
             return False
         else:
             if swapCells(matrix, x, y, x + 1, y):
@@ -158,7 +120,6 @@ def transition(matrix, moveDirection):
                 return False
     elif moveDirection == "left":
         if y == 0:
-            print("Invalid move: ", moveDirection)
             return False
         else:
             if swapCells(matrix, x, y, x, y - 1):
@@ -167,7 +128,6 @@ def transition(matrix, moveDirection):
                 return False
     elif moveDirection == "right":
         if y == 2:
-            print("Invalid move: ", moveDirection)
             return False
         else:
             if swapCells(matrix, x, y, x, y + 1):
@@ -175,35 +135,65 @@ def transition(matrix, moveDirection):
             else:
                 return False
     else:
-        print("Invalid move: ", moveDirection)
         return False
 
 
-
-listOfValues = [1, 2, 3, 4, 5, 6, 7, 8, 0]
+listOfValues = [2, 5, 3, 1, 0, 6, 4, 7, 8]
 matrix = init(listOfValues)
+
+counter = 0
+
+
+def opposite(moveDirection):
+    if moveDirection == "up":
+        return "down"
+    elif moveDirection == "down":
+        return "up"
+    elif moveDirection == "left":
+        return "right"
+    elif moveDirection == "right":
+        return "left"
+    else:
+        return None
+
+
+def DFS(matrix, depth):
+    if depth == 0:
+        return False
+    if checkFinalOrder(matrix):
+        return True
+
+    x, y = findZero(matrix)
+
+    for moveDirection in ["up", "down", "left", "right"]:
+
+        if transition(matrix, moveDirection):
+            print("Counter: ", counter)
+            if DFS(matrix, depth - 1):
+                return True
+            transition(matrix, opposite(moveDirection))
+
+    return False
+
+
 print('Initial matrix: ')
 printMatrix(matrix)
-print(matrix[0, 0].value)
-print(matrix[0, 1].value)
-print()
-
-print('Matrix after swap: ')
-swapCells(matrix, 2, 2, 1, 2)
-printMatrix(matrix)
-print(matrix[0, 0].value)
-print(matrix[0, 1].value)
 
 
-print('Matrix after first transition: ')
-if transition(matrix, "up"):
+def IDDFS(matrix):
+    depth = 0
+    while True:
+        print("Current depth: ", depth)
+
+        if DFS(matrix, depth):
+            return True
+        depth += 1
+
+
+result = IDDFS(matrix)
+
+if result:
+    print("Solution found:")
     printMatrix(matrix)
-
-print('Matrix after second transition: ')
-if transition(matrix, "left"):
-    printMatrix(matrix)
-
-print('Matrix after invalid transition: ')
-if transition(matrix, "up"):
-    printMatrix(matrix)
-
+else:
+    print("No solution found.")
