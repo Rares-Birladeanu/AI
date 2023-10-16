@@ -127,18 +127,21 @@ def swapCells(matrice, x1, y1, x2, y2):
     if not oneIsZero(matrice, x1, x2, y1, y2):
         return matrice
     else:
-        matrix = resetIsMovable(matrice)
-        matrix = swapValues(matrix, x1, y1, x2, y2)
-        matrix = checkZeroAndSetIsMovable(matrix, x1, y1, x2, y2)
-        return matrix
+        matrice = resetIsMovable(matrice)
+        matrice = swapValues(matrice, x1, y1, x2, y2)
+        matrice = checkZeroAndSetIsMovable(matrice, x1, y1, x2, y2)
+        return matrice
 
 
 listOfValues = [1, 2, 3, 4, 5, 6, 7, 8, 0]
 matrix = init(listOfValues)
+print('Initial matrix: ')
 printMatrix(matrix)
 print(matrix[0, 0].value)
 print(matrix[0, 1].value)
 print()
+
+print('Matrix after swap: ')
 matrix = swapCells(matrix, 2, 2, 1, 2)
 printMatrix(matrix)
 print(matrix[0, 0].value)
