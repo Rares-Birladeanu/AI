@@ -84,16 +84,12 @@ def resetIsMovable(matrix):
         for j in range(3):
             matrix[i, j].isMovable = True
 
-    return matrix
-
 
 def swapValues(matrix, x1, y1, x2, y2):
     # swap the values of the cells
     aux = matrix[x1, y1].value
     matrix[x1, y1].value = matrix[x2, y2].value
     matrix[x2, y2].value = aux
-
-    return matrix
 
 
 def checkZeroAndSetIsMovable(matrix, x1, y1, x2, y2):
@@ -102,8 +98,6 @@ def checkZeroAndSetIsMovable(matrix, x1, y1, x2, y2):
         matrix[x2, y2].isMovable = False
     else:
         matrix[x1, y1].isMovable = False
-
-    return matrix
 
 
 def areAdjacent(x1, y1, x2, y2):
@@ -119,18 +113,71 @@ def areAdjacent(x1, y1, x2, y2):
             return False
 
 
-def swapCells(matrice, x1, y1, x2, y2):
+def swapCells(matrix, x1, y1, x2, y2):
     if not areAdjacent(x1, y1, x2, y2):
-        return matrice
-    if not areMovable(matrice, x1, x2, y1, y2):
-        return matrice
-    if not oneIsZero(matrice, x1, x2, y1, y2):
-        return matrice
+        return False
+    if not areMovable(matrix, x1, x2, y1, y2):
+        return False
+    if not oneIsZero(matrix, x1, x2, y1, y2):
+        return False
     else:
-        matrice = resetIsMovable(matrice)
-        matrice = swapValues(matrice, x1, y1, x2, y2)
-        matrice = checkZeroAndSetIsMovable(matrice, x1, y1, x2, y2)
-        return matrice
+        resetIsMovable(matrix)
+        swapValues(matrix, x1, y1, x2, y2)
+        checkZeroAndSetIsMovable(matrix, x1, y1, x2, y2)
+        return True
+
+
+def findZero(matrix):
+    for i in range(3):
+        for j in range(3):
+            if matrix[i, j].value == 0:
+                return i, j
+
+
+def transition(matrix, moveDirection):
+    x, y = findZero(matrix)
+
+
+    if moveDirection == "up":
+        if x == 0:
+            print("Invalid move: ", moveDirection)
+            return False
+        else:
+            if swapCells(matrix, x, y, x - 1, y):
+                return True
+            else:
+                return False
+    elif moveDirection == "down":
+        if x == 2:
+            print("Invalid move: ", moveDirection)
+            return False
+        else:
+            if swapCells(matrix, x, y, x + 1, y):
+                return True
+            else:
+                return False
+    elif moveDirection == "left":
+        if y == 0:
+            print("Invalid move: ", moveDirection)
+            return False
+        else:
+            if swapCells(matrix, x, y, x, y - 1):
+                return True
+            else:
+                return False
+    elif moveDirection == "right":
+        if y == 2:
+            print("Invalid move: ", moveDirection)
+            return False
+        else:
+            if swapCells(matrix, x, y, x, y + 1):
+                return True
+            else:
+                return False
+    else:
+        print("Invalid move: ", moveDirection)
+        return False
+
 
 
 listOfValues = [1, 2, 3, 4, 5, 6, 7, 8, 0]
@@ -142,7 +189,21 @@ print(matrix[0, 1].value)
 print()
 
 print('Matrix after swap: ')
-matrix = swapCells(matrix, 2, 2, 1, 2)
+swapCells(matrix, 2, 2, 1, 2)
 printMatrix(matrix)
 print(matrix[0, 0].value)
 print(matrix[0, 1].value)
+
+
+print('Matrix after first transition: ')
+if transition(matrix, "up"):
+    printMatrix(matrix)
+
+print('Matrix after second transition: ')
+if transition(matrix, "left"):
+    printMatrix(matrix)
+
+print('Matrix after invalid transition: ')
+if transition(matrix, "up"):
+    printMatrix(matrix)
+
