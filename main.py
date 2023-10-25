@@ -1,7 +1,5 @@
 import copy
-import heapq
 import time
-
 import numpy as np
 
 
@@ -21,12 +19,12 @@ def init(listOfValues):
 
 
 def checkFinalOrder(matrix):
-    max = -1
+    finalMax = -1
     for i in range(3):
         for j in range(3):
             if matrix[i, j].value != 0:
-                if matrix[i, j].value > max:
-                    max = matrix[i, j].value
+                if matrix[i, j].value > finalMax:
+                    finalMax = matrix[i, j].value
                 else:
                     return False
 
@@ -90,8 +88,6 @@ def swapCells(matrix, x1, y1, x2, y2):
     else:
         resetIsMovable(matrix)
         swapValues(matrix, x1, y1, x2, y2)
-        global counter
-        counter += 1
         checkZeroAndSetIsMovable(matrix, x1, y1, x2, y2)
         return True
 
@@ -159,6 +155,8 @@ def opposite(moveDirection):
 
 
 def DFS(matrix, depth):
+    global counter
+
     if depth == 0:
         return False
     if checkFinalOrder(matrix):
@@ -167,6 +165,7 @@ def DFS(matrix, depth):
     for moveDirection in ["up", "down", "left", "right"]:
 
         if transition(matrix, moveDirection):
+            counter += 1
             if DFS(matrix, depth - 1):
                 return True
             transition(matrix, opposite(moveDirection))
@@ -182,7 +181,6 @@ def IDDFS(matrix):
         depth += 1
 
 
-# Ex 5
 def manhattan_distance(matrix):
     distance = 0
     for i in range(3):
@@ -192,6 +190,7 @@ def manhattan_distance(matrix):
                 goal_row, goal_col = (value - 1) // 3, (value - 1) % 3
                 distance += abs(goal_row - i) + abs(goal_col - j)
     return distance
+
 
 def hamming_distance(matrix):
     distance = 0
@@ -203,6 +202,7 @@ def hamming_distance(matrix):
                 if goal_row != i or goal_col != j:
                     distance += 1
     return distance
+
 
 def misplaced_tiles(matrix):
     misplaced = 0
@@ -219,15 +219,13 @@ def misplaced_tiles(matrix):
 def greedy_best_search(matrix, heuristic):
     visited_states = set()
     queue = [(matrix, 0)]  # (matrix, heuristic value)
-    transition_counter = 0
+    global counter
+    counter = 0
     while queue:
         queue.sort(key=lambda x: heuristic(x[0]))
         current_matrix, depth = queue.pop(0)
 
         if checkFinalOrder(current_matrix):
-            printMatrix(current_matrix)
-            print("Solution found")
-            print("Number of transitions: ", transition_counter)
             return True
 
         visited_states.add(tuple(map(tuple, current_matrix)))
@@ -235,7 +233,7 @@ def greedy_best_search(matrix, heuristic):
         if depth >= 50:
             continue
 
-        transition_counter += 1
+        counter += 1
 
         for moveDirection in ["up", "down", "left", "right"]:
             new_matrix = copy.deepcopy(current_matrix)
@@ -254,12 +252,13 @@ def run_strategy(matrix, strategy, heuristic=None):
     else:
         result = strategy(matrix, heuristic)
     execution_time = time.time() - start_time
-    return result, execution_time
+    return result, execution_time, counter
 
 
 matrix1_values = [8, 6, 7, 2, 5, 4, 0, 3, 1]
 matrix2_values = [2, 7, 5, 0, 8, 4, 3, 1, 6]
 matrix3_values = [2, 5, 3, 1, 0, 6, 4, 7, 8]
+
 
 def run_all(*values_list):
     for values in values_list:
@@ -267,12 +266,12 @@ def run_all(*values_list):
         print("Matrix: ", values)
         print("IDDFS: ", run_strategy(matrix, IDDFS))
         matrix = init(values)
-        print("Greedy best search with manhattan distance: ", run_strategy(matrix, greedy_best_search, manhattan_distance))
+        print("Greedy best search with manhattan distance: ",
+              run_strategy(matrix, greedy_best_search, manhattan_distance))
         matrix = init(values)
         print("Greedy best search with hamming distance: ", run_strategy(matrix, greedy_best_search, hamming_distance))
         matrix = init(values)
         print("Greedy best search with misplaced tiles: ", run_strategy(matrix, greedy_best_search, misplaced_tiles))
-        matrix = init(values)
         print("\n")
 
 
