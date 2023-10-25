@@ -1,3 +1,7 @@
+import copy
+import heapq
+import time
+
 import numpy as np
 
 
@@ -138,9 +142,6 @@ def transition(matrix, moveDirection):
         return False
 
 
-listOfValues = [2, 5, 3, 1, 0, 6, 4, 7, 8]
-matrix = init(listOfValues)
-
 counter = 0
 
 
@@ -163,12 +164,9 @@ def DFS(matrix, depth):
     if checkFinalOrder(matrix):
         return True
 
-    x, y = findZero(matrix)
-
     for moveDirection in ["up", "down", "left", "right"]:
 
         if transition(matrix, moveDirection):
-            print("Counter: ", counter)
             if DFS(matrix, depth - 1):
                 return True
             transition(matrix, opposite(moveDirection))
@@ -176,24 +174,106 @@ def DFS(matrix, depth):
     return False
 
 
-print('Initial matrix: ')
-printMatrix(matrix)
-
-
 def IDDFS(matrix):
     depth = 0
     while True:
-        print("Current depth: ", depth)
-
         if DFS(matrix, depth):
             return True
         depth += 1
 
 
-result = IDDFS(matrix)
+# Ex 5
+def manhattan_distance(matrix):
+    distance = 0
+    for i in range(3):
+        for j in range(3):
+            value = matrix[i, j].value
+            if value != 0:
+                goal_row, goal_col = (value - 1) // 3, (value - 1) % 3
+                distance += abs(goal_row - i) + abs(goal_col - j)
+    return distance
 
-if result:
-    print("Solution found:")
-    printMatrix(matrix)
-else:
-    print("No solution found.")
+def hamming_distance(matrix):
+    distance = 0
+    for i in range(3):
+        for j in range(3):
+            value = matrix[i, j].value
+            if value != 0:
+                goal_row, goal_col = (value - 1) // 3, (value - 1) % 3
+                if goal_row != i or goal_col != j:
+                    distance += 1
+    return distance
+
+def misplaced_tiles(matrix):
+    misplaced = 0
+    goal_matrix = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 0]])
+
+    for i in range(3):
+        for j in range(3):
+            if matrix[i, j].value != goal_matrix[i, j]:
+                misplaced += 1
+
+    return misplaced
+
+
+def greedy_best_search(matrix, heuristic):
+    visited_states = set()
+    queue = [(matrix, 0)]  # (matrix, heuristic value)
+    transition_counter = 0
+    while queue:
+        queue.sort(key=lambda x: heuristic(x[0]))
+        current_matrix, depth = queue.pop(0)
+
+        if checkFinalOrder(current_matrix):
+            printMatrix(current_matrix)
+            print("Solution found")
+            print("Number of transitions: ", transition_counter)
+            return True
+
+        visited_states.add(tuple(map(tuple, current_matrix)))
+
+        if depth >= 50:
+            continue
+
+        transition_counter += 1
+
+        for moveDirection in ["up", "down", "left", "right"]:
+            new_matrix = copy.deepcopy(current_matrix)
+            if transition(new_matrix, moveDirection):
+                if tuple(map(tuple, new_matrix)) not in visited_states:
+                    queue.append((new_matrix, depth + 1))
+
+    print("Solution not found")
+    return False
+
+
+def run_strategy(matrix, strategy, heuristic=None):
+    start_time = time.time()
+    if heuristic is None:
+        result = strategy(matrix)
+    else:
+        result = strategy(matrix, heuristic)
+    execution_time = time.time() - start_time
+    return result, execution_time
+
+
+matrix1_values = [8, 6, 7, 2, 5, 4, 0, 3, 1]
+matrix2_values = [2, 7, 5, 0, 8, 4, 3, 1, 6]
+matrix3_values = [2, 5, 3, 1, 0, 6, 4, 7, 8]
+
+def run_all(*values_list):
+    for values in values_list:
+        matrix = init(values)
+        print("Matrix: ", values)
+        print("IDDFS: ", run_strategy(matrix, IDDFS))
+        matrix = init(values)
+        print("Greedy best search with manhattan distance: ", run_strategy(matrix, greedy_best_search, manhattan_distance))
+        matrix = init(values)
+        print("Greedy best search with hamming distance: ", run_strategy(matrix, greedy_best_search, hamming_distance))
+        matrix = init(values)
+        print("Greedy best search with misplaced tiles: ", run_strategy(matrix, greedy_best_search, misplaced_tiles))
+        matrix = init(values)
+        print("\n")
+
+
+run_all(matrix1_values, matrix2_values, matrix3_values)
