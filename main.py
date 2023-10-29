@@ -181,6 +181,9 @@ def IDDFS(matrix):
         depth += 1
 
 
+# ----------------------------------
+
+
 def manhattan_distance(matrix):
     distance = 0
     for i in range(3):
@@ -275,4 +278,4 @@ def run_all(*values_list):
         print("\n")
 
 
-run_all(matrix1_values, matrix2_values, matrix3_values)
+run_all( matrix3_values, matrix1_values, matrix2_values)
