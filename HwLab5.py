@@ -16,6 +16,10 @@ class Player:
     def getName(self):
         return self.name
 
+    def undoMovePlayer(self, move):
+        if move in self.listOfMoves:
+            self.listOfMoves.remove(move)
+
 
 """
 The Game:
@@ -89,58 +93,25 @@ class Game:
                 print("x", end=" ")
         print()
 
-    def minimax(self, depth, maximizingPlayer):
-        if depth == 0 or self.checkIsWinner(self.human) or self.checkIsWinner(self.computer):
-            return self.heuristic()
-
-        if maximizingPlayer:
-            value = float('-inf')
-            for move in self.possibleMoves:
-                if move in self.possibleMoves:
-                    # Simulate the move
-                    self.move(self.computer, move)
-                    # Recursively call minimax on the child node
-                    value = max(value, self.minimax(depth - 1, False))
-                    # Undo the move (backtrack)
-                    self.undoMove(move)
-            return value
-        else:
-            value = float('inf')
-            for move in self.possibleMoves:
-                if move in self.possibleMoves:
-                    # Simulate the move
-                    self.move(self.human, move)
-                    # Recursively call minimax on the child node
-                    value = min(value, self.minimax(depth - 1, True))
-                    # Undo the move (backtrack)
-                    self.undoMove(move)
-            return value
-
-    def heuristic(self):
-        pass
-
-    def undoMove(self, move):
-        # Implement the logic to undo a move
-        # This is necessary for backtracking during the Minimax algorithm
+    def undoMove(self, player, move):
+        player.undoMovePlayer(move)
         self.possibleMoves.append(move)
-        if move in self.human.getMoves():
-            self.human.getMoves().remove(move)
+        player.isTurn = False
+        if player == self.human:
+            self.computer.isTurn = True
+            self.human.isTurn = False
         else:
-            self.computer.getMoves().remove(move)
-
-    def findBestMove(self):
-        pass
+            self.human.isTurn = True
+            self.computer.isTurn = False
 
     def play(self):
         while True:
             self.printPossibleMoves()
             if self.checkIsWinner(self.human):
-                self.human.setWinner(self.human)
                 self.setWinner(self.human)
                 print(self.human.getName(), "wins!")
                 break
             if self.checkIsWinner(self.computer):
-                self.computer.setWinner(self.computer)
                 self.setWinner(self.computer)
                 print(self.computer.getName(), "wins!")
                 break
@@ -152,10 +123,49 @@ class Game:
                 if not self.move(self.human, move):
                     print("Invalid move")
             else:  # the computer's turn
-                # self.computerBestMove()
-                bestMove = self.findBestMove()
-                print(self.computer.getName(), " chooses ", bestMove)
-                self.move(self.computer, bestMove)
+                move = self.bestMove()
+                self.move(self.computer, move)
+                print(self.computer.getName(), "moves", move)
+
+    def bestMove(self):
+        # iterate through all possible moves
+        bestScore = -100000000
+        bestMove = None
+        for move in self.possibleMoves:
+            # move with that move
+            self.move(self.computer, move)
+            score = self.minimax(self.computer, 0, False)
+            # undo the move
+            self.undoMove(self.computer, move)
+            if score > bestScore:
+                bestScore = score
+                bestMove = move
+        return bestMove
+
+    def minimax(self, player, depth, isMaximizing):
+        # check if the game is over
+        if self.checkIsWinner(self.computer):
+            return 1
+        if self.checkIsWinner(self.human):
+            return -1
+        if self.checkDraw():
+            return 0
+
+        if isMaximizing:
+            bestScore = -100000000
+            for move in self.possibleMoves:
+                self.move(self.computer, move)
+                score = self.minimax(self.computer, depth + 1, False)
+                self.undoMove(self.computer, move)
+                bestScore = max(score, bestScore)
+            return bestScore
+        else:
+            bestScore = 100000000
+            for move in self.possibleMoves:
+                score = self.minimax(self.human, depth + 1, True)
+                self.undoMove(self.human, move)
+                bestScore = min(score, bestScore)
+            return bestScore
 
 
 player1 = Player("Player", True)
