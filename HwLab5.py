@@ -4,9 +4,6 @@ class Player:
         self.isTurn = isTurn
         self.listOfMoves = []
 
-    def isTurn(self):
-        return self.isTurn
-
     def addMove(self, move):
         self.listOfMoves.append(move)
 
@@ -15,20 +12,6 @@ class Player:
 
     def getName(self):
         return self.name
-
-    def undoMovePlayer(self, move):
-        if move in self.listOfMoves:
-            self.listOfMoves.remove(move)
-
-
-"""
-The Game:
-Two players alternately choose a number between 1 and 9 without repeating a number previously chosen by either player. The player who has chosen from the beginning of the game three numbers that add up to a total of 15 wins. If no more numbers can be chosen and no player has won, the game ends in a draw. 
-Example: A:3 B:9 A:5 B:7 A:2 B:8 A:4 B:1 A:6 A wins (6+5+4)
-
-1. Implement a heuristic.
-2. Implement the MinMax strategy for player B anticipating at least two opponent moves.
-"""
 
 
 class Game:
@@ -93,27 +76,18 @@ class Game:
                 print("x", end=" ")
         print()
 
-    def undoMove(self, player, move):
-        player.undoMovePlayer(move)
-        self.possibleMoves.append(move)
-        player.isTurn = False
-        if player == self.human:
-            self.computer.isTurn = True
-            self.human.isTurn = False
-        else:
-            self.human.isTurn = True
-            self.computer.isTurn = False
-
     def play(self):
         while True:
             self.printPossibleMoves()
             if self.checkIsWinner(self.human):
                 self.setWinner(self.human)
                 print(self.human.getName(), "wins!")
+                print("Winning moves:", self.getWinningMoves(self.human))
                 break
             if self.checkIsWinner(self.computer):
                 self.setWinner(self.computer)
                 print(self.computer.getName(), "wins!")
+                print("Winning moves:", self.getWinningMoves(self.computer))
                 break
             if self.checkDraw():
                 print("Draw!")
@@ -123,49 +97,70 @@ class Game:
                 if not self.move(self.human, move):
                     print("Invalid move")
             else:  # the computer's turn
-                move = self.bestMove()
+                computer_move = self.minmax_strategy()
+                print(f"{self.computer.getName()} chooses {computer_move}")
+                if not self.move(self.computer, computer_move):
+                    print("Invalid move")
+
+    def heuristic_available_moves(self):
+        valid_moves = [move for move in self.possibleMoves if
+                       move not in self.human.getMoves() and move not in self.computer.getMoves()]
+        return sorted(valid_moves, key=lambda x: abs(x - 5))
+
+    def minmax_decision(self, player, depth):
+        if depth == 0 or self.game_over():
+            return self.evaluate()
+
+        if player == self.computer:
+            best_value = float('-inf')
+            for move in self.heuristic_available_moves():
                 self.move(self.computer, move)
-                print(self.computer.getName(), "moves", move)
-
-    def bestMove(self):
-        # iterate through all possible moves
-        bestScore = -100000000
-        bestMove = None
-        for move in self.possibleMoves:
-            # move with that move
-            self.move(self.computer, move)
-            score = self.minimax(self.computer, 0, False)
-            # undo the move
-            self.undoMove(self.computer, move)
-            if score > bestScore:
-                bestScore = score
-                bestMove = move
-        return bestMove
-
-    def minimax(self, player, depth, isMaximizing):
-        # check if the game is over
-        if self.checkIsWinner(self.computer):
-            return 1
-        if self.checkIsWinner(self.human):
-            return -1
-        if self.checkDraw():
-            return 0
-
-        if isMaximizing:
-            bestScore = -100000000
-            for move in self.possibleMoves:
-                self.move(self.computer, move)
-                score = self.minimax(self.computer, depth + 1, False)
-                self.undoMove(self.computer, move)
-                bestScore = max(score, bestScore)
-            return bestScore
+                value = self.minmax_decision(self.human, depth - 1)
+                best_value = max(best_value, value)
+                self.possibleMoves.append(move)
+                self.computer.getMoves().remove(move)
+                player.isTurn = False
+                self.human.isTurn = True
+            return best_value
         else:
-            bestScore = 100000000
-            for move in self.possibleMoves:
-                score = self.minimax(self.human, depth + 1, True)
-                self.undoMove(self.human, move)
-                bestScore = min(score, bestScore)
-            return bestScore
+            best_value = float('inf')
+            for move in self.heuristic_available_moves():
+                self.move(self.human, move)
+                value = self.minmax_decision(self.computer, depth - 1)
+                best_value = min(best_value, value)
+                self.possibleMoves.append(move)
+                self.human.getMoves().remove(move)
+                player.isTurn = False
+                self.computer.isTurn = True
+            return best_value
+
+    def minmax_strategy(self):
+        best_move = None
+        best_value = float('-inf')
+        for move in self.heuristic_available_moves():
+            self.move(self.computer, move)
+            value = self.minmax_decision(self.human, 3)
+            if value > best_value:
+                best_value = value
+                best_move = move
+            self.possibleMoves.append(move)
+            self.computer.getMoves().remove(move)
+            self.computer.isTurn = False
+            self.human.isTurn = True
+
+        return best_move
+
+    def evaluate(self):
+        if self.getWinningMoves(self.human):
+            return -10
+
+        if self.getWinningMoves(self.computer):
+            return 10
+
+        return len(self.computer.getMoves()) - len(self.human.getMoves())
+
+    def game_over(self):
+        return self.getWinner() is not None or self.checkDraw()
 
 
 player1 = Player("Player", True)
