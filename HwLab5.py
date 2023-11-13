@@ -76,6 +76,11 @@ class Game:
                 print("x", end=" ")
         print()
 
+    def heuristic_available_moves(self):
+        valid_moves = [move for move in self.possibleMoves if
+                       move not in self.human.getMoves() and move not in self.computer.getMoves()]
+        return sorted(valid_moves, key=lambda x: abs(x - 5))
+
     def play(self):
         while True:
             self.printPossibleMoves()
@@ -101,11 +106,6 @@ class Game:
                 print(f"{self.computer.getName()} chooses {computer_move}")
                 if not self.move(self.computer, computer_move):
                     print("Invalid move")
-
-    def heuristic_available_moves(self):
-        valid_moves = [move for move in self.possibleMoves if
-                       move not in self.human.getMoves() and move not in self.computer.getMoves()]
-        return sorted(valid_moves, key=lambda x: abs(x - 5))
 
     def minmax_decision(self, player, depth):
         if depth == 0 or self.game_over():
